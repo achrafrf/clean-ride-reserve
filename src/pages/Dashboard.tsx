@@ -21,7 +21,9 @@ import {
   Truck, 
   Check, 
   X, 
-  Calendar 
+  Calendar,
+  ListChecks, 
+  CheckIcon
 } from 'lucide-react';
 
 interface Booking {
@@ -36,11 +38,25 @@ interface Booking {
   status: 'pending' | 'confirmed' | 'rejected';
   createdAt: string;
   price: number;
+  cleaningStages?: {
+    [key: string]: boolean;
+  };
 }
+
+// Define cleaning stages corresponding to those in Tracking.tsx
+const cleaningStagesList = [
+  { id: "prewash", name: "Pre-wash" },
+  { id: "mainWash", name: "Main Wash" },
+  { id: "rinse", name: "Rinse" },
+  { id: "waxing", name: "Waxing" },
+  { id: "detailing", name: "Detailing" },
+  { id: "drying", name: "Drying" }
+];
 
 export default function Dashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
 
   useEffect(() => {
     // Load bookings from localStorage
@@ -49,7 +65,8 @@ export default function Dashboard() {
     const processedBookings = storedBookings.map((booking: any) => ({
       ...booking,
       date: new Date(booking.date).toISOString(),
-      createdAt: new Date(booking.createdAt).toISOString()
+      createdAt: new Date(booking.createdAt).toISOString(),
+      cleaningStages: booking.cleaningStages || {}
     }));
     
     // Sort by date, newest first
@@ -74,6 +91,48 @@ export default function Dashboard() {
       title: `Booking ${status === 'confirmed' ? 'Confirmed' : 'Rejected'}`,
       description: `Booking #${id} has been ${status === 'confirmed' ? 'confirmed' : 'rejected'}.`,
     });
+  };
+
+  const toggleStageStatus = (bookingId: string, stageId: string) => {
+    const updatedBookings = bookings.map(booking => {
+      if (booking.id === bookingId) {
+        const updatedCleaningStages = {
+          ...booking.cleaningStages,
+          [stageId]: !booking.cleaningStages?.[stageId]
+        };
+        
+        // Check if all stages are complete
+        const allStagesComplete = cleaningStagesList.every(stage => 
+          updatedCleaningStages[stage.id] === true
+        );
+        
+        if (allStagesComplete) {
+          toast({
+            title: "Cleaning Complete",
+            description: `All cleaning stages for ${booking.name}'s vehicle have been completed.`,
+            variant: "default",
+          });
+        }
+        
+        return {
+          ...booking,
+          cleaningStages: updatedCleaningStages
+        };
+      }
+      return booking;
+    });
+    
+    // Update localStorage
+    localStorage.setItem('bookings', JSON.stringify(updatedBookings));
+    setBookings(updatedBookings);
+  };
+  
+  const toggleBookingExpanded = (id: string) => {
+    if (expandedBooking === id) {
+      setExpandedBooking(null);
+    } else {
+      setExpandedBooking(id);
+    }
   };
 
   const filteredBookings = activeTab === 'all' 
@@ -136,9 +195,9 @@ export default function Dashboard() {
                       </div>
                       <div className="text-right">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          booking.status === 'confirmed' ? 'bg-green-100 text-green-800' : 
-                          booking.status === 'rejected' ? 'bg-red-100 text-red-800' : 
-                          'bg-yellow-100 text-yellow-800'
+                          booking.status === 'confirmed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 
+                          booking.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 
+                          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                         }`}>
                           {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                         </span>
@@ -171,7 +230,7 @@ export default function Dashboard() {
                           variant="outline" 
                           size="sm" 
                           onClick={() => updateBookingStatus(booking.id, 'rejected')}
-                          className="bg-red-100 text-red-800 hover:bg-red-200"
+                          className="bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400"
                         >
                           <X className="h-4 w-4 mr-1" /> Reject
                         </Button>
@@ -183,6 +242,43 @@ export default function Dashboard() {
                           <Check className="h-4 w-4 mr-1" /> Confirm
                         </Button>
                       </div>
+                    )}
+                    
+                    {/* Add cleaning stages tracking for confirmed bookings */}
+                    {booking.status === 'confirmed' && (
+                      <>
+                        <div className="mt-4">
+                          <Button 
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleBookingExpanded(booking.id)}
+                            className="flex items-center gap-2"
+                          >
+                            <ListChecks className="h-4 w-4" />
+                            {expandedBooking === booking.id ? "Hide Cleaning Stages" : "Manage Cleaning Stages"}
+                          </Button>
+                        </div>
+                        
+                        {expandedBooking === booking.id && (
+                          <div className="mt-4 border rounded-md p-4">
+                            <h3 className="font-medium mb-2">Cleaning Progress</h3>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                              {cleaningStagesList.map(stage => (
+                                <Button 
+                                  key={stage.id}
+                                  variant={booking.cleaningStages?.[stage.id] ? "default" : "outline"}
+                                  size="sm"
+                                  className={`justify-start ${booking.cleaningStages?.[stage.id] ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                                  onClick={() => toggleStageStatus(booking.id, stage.id)}
+                                >
+                                  {booking.cleaningStages?.[stage.id] && <CheckIcon className="h-4 w-4 mr-2" />}
+                                  {stage.name}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </CardContent>
                 </Card>

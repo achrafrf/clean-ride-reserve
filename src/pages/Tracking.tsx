@@ -6,71 +6,163 @@ import { CheckIcon, LoaderIcon, WashingMachine, SparklesIcon, TimerIcon } from "
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLanguage } from "@/components/LanguageProvider";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
+// Define cleaning stages
 const cleaningStages = [
-  { id: 1, name: "prewash", time: 15 },
-  { id: 2, name: "mainWash", time: 20 },
-  { id: 3, name: "rinse", time: 10 },
-  { id: 4, name: "waxing", time: 15 },
-  { id: 5, name: "detailing", time: 25 },
-  { id: 6, name: "drying", time: 15 },
+  { id: "prewash", name: "prewash", time: 15 },
+  { id: "mainWash", name: "mainWash", time: 20 },
+  { id: "rinse", name: "rinse", time: 10 },
+  { id: "waxing", name: "waxing", time: 15 },
+  { id: "detailing", name: "detailing", time: 25 },
+  { id: "drying", name: "drying", time: 15 },
 ];
+
+interface Booking {
+  id: string;
+  name: string;
+  cleaningStages?: {
+    [key: string]: boolean;
+  };
+  status: string;
+}
 
 export default function Tracking() {
   const [currentStage, setCurrentStage] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookingId, setBookingId] = useState("");
+  const [activeBooking, setActiveBooking] = useState<Booking | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
   
-  // Calculate the overall progress percentage
-  const overallProgress = Math.min(
-    Math.round((currentStage / cleaningStages.length) * 100),
-    100
-  );
-
-  // Simulate cleaning progress
+  // Load bookings from localStorage
   useEffect(() => {
-    if (currentStage < cleaningStages.length && !isCompleted) {
-      const stage = cleaningStages[currentStage];
-      setTimeLeft(stage.time);
-      
-      // Log current stage for debugging
-      console.log(`Starting stage: ${stage.name}, Time: ${stage.time} minutes`);
-      
-      const timer = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            setTimeout(() => {
-              setCurrentStage((prevStage) => {
-                const nextStage = prevStage + 1;
-                if (nextStage >= cleaningStages.length) {
-                  setIsCompleted(true);
-                  toast({
-                    title: t('cleaningCompleted'),
-                    description: t('yourCarIsReadyForPickup'),
-                    duration: 5000,
-                  });
-                }
-                return nextStage;
-              });
-            }, 500);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000); // Update every second for demo purposes
-      
-      return () => clearInterval(timer);
+    const storedBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+    const confirmedBookings = storedBookings.filter((booking: any) => booking.status === 'confirmed');
+    setBookings(confirmedBookings);
+  }, []);
+  
+  // Find booking by ID
+  const handleFindBooking = () => {
+    if (!bookingId.trim()) {
+      toast({
+        title: t('error'),
+        description: t('pleaseEnterBookingId'),
+        variant: "destructive",
+      });
+      return;
     }
-  }, [currentStage, toast, t]);
+    
+    const booking = bookings.find(b => b.id === bookingId);
+    if (booking) {
+      setActiveBooking(booking);
+      
+      // Calculate current stage from cleaning stages
+      if (booking.cleaningStages) {
+        const completedStagesCount = Object.values(booking.cleaningStages).filter(Boolean).length;
+        setCurrentStage(completedStagesCount);
+        setIsCompleted(completedStagesCount === cleaningStages.length);
+      } else {
+        setCurrentStage(0);
+        setIsCompleted(false);
+      }
+      
+      toast({
+        title: t('bookingFound'),
+        description: t('trackingYourCleaning'),
+      });
+    } else {
+      toast({
+        title: t('bookingNotFound'),
+        description: t('pleaseCheckYourBookingId'),
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Calculate the overall progress percentage
+  const overallProgress = activeBooking ? Math.min(
+    Math.round(
+      (Object.values(activeBooking.cleaningStages || {}).filter(Boolean).length / 
+      cleaningStages.length) * 100
+    ),
+    100
+  ) : 0;
+  
+  // Demo mode simulation (when no booking is selected)
+  useEffect(() => {
+    if (!activeBooking && !isValidating) {
+      // This is demo mode simulation
+      if (currentStage < cleaningStages.length && !isCompleted) {
+        const stage = cleaningStages[currentStage];
+        setTimeLeft(stage.time);
+        
+        const timer = setInterval(() => {
+          setTimeLeft((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              setTimeout(() => {
+                setCurrentStage((prevStage) => {
+                  const nextStage = prevStage + 1;
+                  if (nextStage >= cleaningStages.length) {
+                    setIsCompleted(true);
+                    toast({
+                      title: t('cleaningCompleted'),
+                      description: t('yourCarIsReadyForPickup'),
+                      duration: 5000,
+                    });
+                  }
+                  return nextStage;
+                });
+              }, 500);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000); // Update every second for demo purposes
+        
+        return () => clearInterval(timer);
+      }
+    }
+  }, [currentStage, toast, t, activeBooking, isValidating]);
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8 text-center">{t('trackingYourCleaning')}</h1>
       
       <div className="max-w-3xl mx-auto">
+        {/* Booking ID Input */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-2xl">{t('enterBookingId')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <Input 
+                placeholder="Enter booking ID"
+                value={bookingId}
+                onChange={(e) => setBookingId(e.target.value)}
+              />
+              <Button onClick={handleFindBooking}>{t('track')}</Button>
+            </div>
+            {activeBooking && (
+              <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-md">
+                <p className="font-medium">{t('tracking')}: {activeBooking.name}</p>
+                <p className="text-sm text-muted-foreground">{t('bookingId')}: {activeBooking.id}</p>
+              </div>
+            )}
+            {!activeBooking && (
+              <p className="mt-4 text-sm text-muted-foreground">
+                {t('demoMode')}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        
         {/* Overall Progress */}
         <Card className="mb-8">
           <CardHeader>
@@ -78,17 +170,20 @@ export default function Tracking() {
           </CardHeader>
           <CardContent>
             <div className="mb-2 flex justify-between text-sm">
-              <span>{t('progress')}: {overallProgress}%</span>
+              <span>{t('progress')}: {activeBooking ? overallProgress : Math.round((currentStage / cleaningStages.length) * 100)}%</span>
               <span>
-                {currentStage} / {cleaningStages.length} {t('stagesCompleted')}
+                {activeBooking ? 
+                  `${Object.values(activeBooking.cleaningStages || {}).filter(Boolean).length} / ${cleaningStages.length} ${t('stagesCompleted')}` : 
+                  `${currentStage} / ${cleaningStages.length} ${t('stagesCompleted')}`
+                }
               </span>
             </div>
-            <Progress value={overallProgress} className="h-4" />
+            <Progress value={activeBooking ? overallProgress : Math.round((currentStage / cleaningStages.length) * 100)} className="h-4" />
           </CardContent>
         </Card>
         
         {/* Completed notification */}
-        {isCompleted && (
+        {(isCompleted || (activeBooking && Object.values(activeBooking.cleaningStages || {}).filter(Boolean).length === cleaningStages.length)) && (
           <Alert className="mb-8 bg-green-50 dark:bg-green-900/20 border-green-500">
             <CheckIcon className="h-5 w-5 text-green-500" />
             <AlertDescription className="text-green-700 dark:text-green-300">
@@ -102,8 +197,16 @@ export default function Tracking() {
           <h2 className="text-xl font-semibold mb-2">{t('cleaningStages')}</h2>
           
           {cleaningStages.map((stage, index) => {
-            const isActive = index === currentStage;
-            const isFinished = index < currentStage;
+            // Determine stage status based on active booking or demo mode
+            let isActive, isFinished;
+            
+            if (activeBooking && activeBooking.cleaningStages) {
+              isFinished = !!activeBooking.cleaningStages[stage.id];
+              isActive = false; // In tracking mode with real booking, no "active" animation
+            } else {
+              isActive = index === currentStage;
+              isFinished = index < currentStage;
+            }
             
             return (
               <Card 
@@ -136,7 +239,7 @@ export default function Tracking() {
                       </div>
                     </div>
                     
-                    {isActive && (
+                    {isActive && !activeBooking && (
                       <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm">
                         <WashingMachine className="h-4 w-4 text-primary" />
                         <span>{t('inProgress')}: {timeLeft} {t('minutesLeft')}</span>
