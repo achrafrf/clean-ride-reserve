@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { 
   Car, 
-  Motorcycle, 
+  Bike, 
   Truck, 
   Check, 
   X, 
@@ -86,7 +86,7 @@ export default function Dashboard() {
       case 'van':
         return <Car className="h-5 w-5" />;
       case 'motorcycle':
-        return <Motorcycle className="h-5 w-5" />;
+        return <Bike className="h-5 w-5" />;
       case 'truck':
         return <Truck className="h-5 w-5" />;
       default:
