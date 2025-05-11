@@ -2,32 +2,34 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from './ThemeToggle';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen flex flex-col dark:bg-gray-900 dark:text-white">
+      <header className="bg-white shadow-sm dark:bg-gray-800 dark:shadow-gray-700/20">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
-              <Link to="/" className="text-xl font-bold">
+              <Link to="/" className="text-xl font-bold dark:text-white">
                 CleanRide
               </Link>
               <nav className="ml-8 hidden md:flex space-x-6">
-                <Link to="/" className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === '/' ? 'text-primary' : 'text-gray-600'}`}>
+                <Link to="/" className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === '/' ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}>
                   Home
                 </Link>
-                <Link to="/booking" className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === '/booking' ? 'text-primary' : 'text-gray-600'}`}>
+                <Link to="/booking" className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === '/booking' ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}>
                   Book Now
                 </Link>
-                <Link to="/dashboard" className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === '/dashboard' ? 'text-primary' : 'text-gray-600'}`}>
+                <Link to="/dashboard" className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === '/dashboard' ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}>
                   Admin Dashboard
                 </Link>
               </nav>
             </div>
-            <div>
+            <div className="flex items-center space-x-4">
+              <ThemeToggle />
               {location.pathname !== '/booking' && (
                 <Link to="/booking">
                   <Button>Book Now</Button>
@@ -42,7 +44,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       
-      <footer className="bg-gray-800 text-white py-8">
+      <footer className="bg-gray-800 dark:bg-gray-900 text-white py-8">
         <div className="container mx-auto px-4">
           <div className="md:flex md:justify-between">
             <div className="mb-6 md:mb-0">
