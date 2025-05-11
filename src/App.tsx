@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import Booking from "./pages/Booking";
 import Dashboard from "./pages/Dashboard";
 import Contact from "./pages/Contact";
+import Tracking from "./pages/Tracking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
               <Route path="/booking" element={<Layout><Booking /></Layout>} />
               <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
               <Route path="/contact" element={<Layout><Contact /></Layout>} />
+              <Route path="/tracking" element={<Layout><Tracking /></Layout>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

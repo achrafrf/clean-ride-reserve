@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -27,6 +26,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
                 <Link to="/booking" className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === '/booking' ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}>
                   {t('booking')}
+                </Link>
+                <Link to="/tracking" className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === '/tracking' ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}>
+                  {t('tracking')}
                 </Link>
                 <Link to="/dashboard" className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === '/dashboard' ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}>
                   {t('dashboard')}
@@ -67,6 +69,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <ul className="space-y-2">
                   <li><Link to="/" className="text-gray-400 hover:text-white">{t('home')}</Link></li>
                   <li><Link to="/booking" className="text-gray-400 hover:text-white">{t('booking')}</Link></li>
+                  <li><Link to="/tracking" className="text-gray-400 hover:text-white">{t('tracking')}</Link></li>
                   <li><Link to="/dashboard" className="text-gray-400 hover:text-white">{t('dashboard')}</Link></li>
                   <li><Link to="/contact" className="text-gray-400 hover:text-white">{t('contact')}</Link></li>
                 </ul>
