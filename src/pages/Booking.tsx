@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
-import { Car, Motorcycle, Truck, Calendar, Clock } from "lucide-react";
+import { Car, Bike, Truck, Calendar, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -51,7 +51,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const vehicleTypes = [
   { value: "car", label: "Car", icon: Car },
-  { value: "motorcycle", label: "Motorcycle", icon: Motorcycle },
+  { value: "motorcycle", label: "Motorcycle", icon: Bike },
   { value: "van", label: "Van", icon: Car },
   { value: "truck", label: "Truck", icon: Truck },
 ];
